@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "jsonplaceholder-test",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
