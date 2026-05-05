@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 
 load_dotenv(".env.local")
 
-from typing import Annotated, Sequence, TypedDict
+from typing import Annotated, Any, Sequence, TypedDict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +15,8 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from pydantic import BaseModel
 
+from ai_sdk import to_base_messages, ui_message_stream_response
+
 # --- Agent setup ---
 
 class AgentState(TypedDict):
@@ -23,11 +25,15 @@ class AgentState(TypedDict):
 
 llm = ChatOpenAI(model="gpt-4o")
 
-search_tool = TavilySearch()
-weather_tool = load_tools(["openweathermap-api"], llm)[0]
-tools = [search_tool, weather_tool]
+import os
 
-llm_with_tools = llm.bind_tools(tools)
+tools: list[Any] = []
+if os.environ.get("TAVILY_API_KEY"):
+    tools.append(TavilySearch())
+if os.environ.get("OPENWEATHERMAP_API_KEY"):
+    tools.append(load_tools(["openweathermap-api"], llm)[0])
+
+llm_with_tools = llm.bind_tools(tools) if tools else llm
 
 
 def llm_call(state: AgentState) -> AgentState:
@@ -38,15 +44,19 @@ def llm_call(state: AgentState) -> AgentState:
 
 def decision(state: AgentState):
     last = state["messages"][-1]
-    return "continue" if last.tool_calls else "end"
+    return "continue" if getattr(last, "tool_calls", None) else "end"
 
 
 graph = StateGraph(AgentState)
 graph.add_node("agent", llm_call)
-graph.add_node("tools", ToolNode(tools=tools))
+if tools:
+    graph.add_node("tools", ToolNode(tools=tools))
 graph.set_entry_point("agent")
-graph.add_conditional_edges("agent", decision, {"continue": "tools", "end": END})
-graph.add_edge("tools", "agent")
+if tools:
+    graph.add_conditional_edges("agent", decision, {"continue": "tools", "end": END})
+    graph.add_edge("tools", "agent")
+else:
+    graph.add_edge("agent", END)
 agent = graph.compile()
 
 # --- FastAPI ---
@@ -89,3 +99,20 @@ def post_message(message: Message):
     reply = result["messages"][-1].content
     messages.append({"role": "assistant", "content": reply})
     return {"messages": messages}
+
+
+# --- Vercel AI SDK Data Stream Protocol endpoint ---
+
+class ChatRequest(BaseModel):
+    messages: list[Any]
+    """UIMessage[] from the frontend `useChat` hook."""
+
+
+@server.post("/api/chat")
+async def chat(req: ChatRequest):
+    """Streams the agent's response in AI SDK v5 Data Stream Protocol format."""
+    base_messages = await to_base_messages(req.messages)
+    stream = agent.astream(
+        {"messages": base_messages}, stream_mode=["values", "messages"]
+    )
+    return ui_message_stream_response(stream)

@@ -9,24 +9,46 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
-import { getMessages, sendMessage } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+
+const transport = new DefaultChatTransport({
+  api: "http://localhost:8000/api/chat",
+});
 
 function App() {
-  const [messages, setMessages] = useState([]);
+  const { messages, sendMessage, status } = useChat({ transport });
 
-  const fetchMessages = async () => {
-    const msgs = await getMessages();
-    setMessages(msgs);
+  const handleSubmit = (msg) => {
+    if (!msg.text) return;
+    sendMessage({ text: msg.text });
   };
 
-  useEffect(() => {
-    fetchMessages();
-  }, []);
-
-  const handleSubmit = async (message) => {
-   const newMessages = await sendMessage(message.text);
-   setMessages(newMessages);
+  const renderPart = (part, idx) => {
+    if (part.type === "text") {
+      return <MessageResponse key={idx}>{part.text}</MessageResponse>;
+    }
+    if (part.type === "reasoning") {
+      return (
+        <MessageResponse key={idx} className="opacity-60 italic">
+          {part.text}
+        </MessageResponse>
+      );
+    }
+    if (part.type?.startsWith("tool-") || part.type === "dynamic-tool") {
+      const name = part.toolName ?? part.type.replace(/^tool-/, "");
+      return (
+        <pre
+          key={idx}
+          className="text-xs rounded bg-muted/50 px-2 py-1 overflow-x-auto"
+        >
+          {`🔧 ${name} (${part.state})${
+            part.input ? `\nin:  ${JSON.stringify(part.input)}` : ""
+          }${part.output ? `\nout: ${JSON.stringify(part.output)}` : ""}`}
+        </pre>
+      );
+    }
+    return null;
   };
 
   return (
@@ -39,10 +61,13 @@ function App() {
 
       <Conversation className="flex-1">
         <ConversationContent className="mx-auto w-full max-w-2xl">
-          {messages.map((message, i) => (
-            <Message key={i} from={message.role === "user" ? "user" : "assistant"}>
+          {messages.map((message) => (
+            <Message
+              key={message.id}
+              from={message.role === "user" ? "user" : "assistant"}
+            >
               <MessageContent>
-                <MessageResponse>{message.content}</MessageResponse>
+                {message.parts?.map(renderPart)}
               </MessageContent>
             </Message>
           ))}
@@ -52,7 +77,7 @@ function App() {
 
       <footer className="flex-none px-6 py-4 border-t">
         <div className="mx-auto w-full max-w-2xl">
-          <ChatInput onSubmit={handleSubmit} />
+          <ChatInput onSubmit={handleSubmit} status={status} />
         </div>
       </footer>
     </div>
