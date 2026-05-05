@@ -13,8 +13,9 @@ from __future__ import annotations
 from typing import Any
 
 try:
-    from langchain_core.messages import AIMessageChunk, ToolMessage
+    from langchain_core.messages import AIMessage, AIMessageChunk, ToolMessage
 except ImportError:  # pragma: no cover
+    AIMessage = None  # type: ignore[assignment,misc]
     AIMessageChunk = None  # type: ignore[assignment,misc]
     ToolMessage = None  # type: ignore[assignment,misc]
 
@@ -59,8 +60,13 @@ def _has_constructor_path(msg: dict[str, Any], names: tuple[str, ...]) -> bool:
 
 
 def is_ai_message_chunk(msg: Any) -> bool:
-    """utils.ts:611 — accepts class instance, plain dict with `type='ai'`, or serialized form."""
-    if _is_class_instance(msg, AIMessageChunk):
+    """utils.ts:611 — accepts class instance, plain dict with `type='ai'`, or serialized form.
+
+    The TS spec accepts class-instance AIMessageChunk only. We additionally accept
+    full AIMessage class instances so that LangGraph nodes which call `llm.invoke()`
+    (rather than `llm.stream()`) still emit text/tool-call chunks downstream.
+    """
+    if _is_class_instance(msg, AIMessageChunk) or _is_class_instance(msg, AIMessage):
         return True
     if isinstance(msg, dict):
         if msg.get("type") == "ai":

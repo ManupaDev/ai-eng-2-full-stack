@@ -2,12 +2,13 @@ from dotenv import load_dotenv
 
 load_dotenv(".env.local")
 
+import os
 from typing import Annotated, Any, Sequence, TypedDict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_classic.agents import load_tools
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langchain_tavily import TavilySearch
 from langgraph.graph import END, StateGraph
@@ -19,13 +20,12 @@ from ai_sdk import to_base_messages, ui_message_stream_response
 
 # --- Agent setup ---
 
+
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
 
 
 llm = ChatOpenAI(model="gpt-4o")
-
-import os
 
 tools: list[Any] = []
 if os.environ.get("TAVILY_API_KEY"):
@@ -70,38 +70,6 @@ server.add_middleware(
     allow_headers=["*"],
 )
 
-messages = []
-
-
-class Message(BaseModel):
-    text: str
-
-
-def to_lc_messages(msgs):
-    result = []
-    for m in msgs:
-        if m["role"] == "user":
-            result.append(HumanMessage(content=m["content"]))
-        else:
-            result.append(AIMessage(content=m["content"]))
-    return result
-
-
-@server.get("/api/messages")
-def get_messages():
-    return {"messages": messages}
-
-
-@server.post("/api/messages")
-def post_message(message: Message):
-    messages.append({"role": "user", "content": message.text})
-    result = agent.invoke({"messages": to_lc_messages(messages)})
-    reply = result["messages"][-1].content
-    messages.append({"role": "assistant", "content": reply})
-    return {"messages": messages}
-
-
-# --- Vercel AI SDK Data Stream Protocol endpoint ---
 
 class ChatRequest(BaseModel):
     messages: list[Any]
