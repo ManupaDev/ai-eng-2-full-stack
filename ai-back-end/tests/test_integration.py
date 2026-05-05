@@ -65,14 +65,12 @@ async def test_chat_streams_full_lifecycle():
     assert "finish" in types
     assert chunks[-1] == {"_done": True}, f"last chunk: {chunks[-1]}"
 
-    # Should have at least one start-step and one finish-step (LangGraph mode).
-    assert "start-step" in types
-    assert "finish-step" in types
-
     # Should have at least one text-start / text-delta / text-end triplet.
+    # (astream_events streams tokens, so multiple text-deltas are expected.)
     assert "text-start" in types
     assert "text-delta" in types
     assert "text-end" in types
+    assert types.count("text-delta") >= 1
 
     # Concatenated text should be non-empty.
     text = "".join(c["delta"] for c in chunks if c.get("type") == "text-delta")

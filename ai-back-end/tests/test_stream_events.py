@@ -76,7 +76,7 @@ def test_chat_model_stream_reasoning_then_text_closes_reasoning():
     ]
 
 
-def test_tool_start_emits_dynamic_tool_input_start():
+def test_tool_start_emits_dynamic_tool_input_start_and_available():
     state = ModelStreamState()
     out: list = []
     process_stream_events_event(
@@ -85,6 +85,36 @@ def test_tool_start_emits_dynamic_tool_input_start():
             "run_id": "tool-1",
             "name": "search",
             "data": {"input": {"q": "x"}},
+        },
+        state,
+        out.append,
+    )
+    assert out == [
+        {
+            "type": "tool-input-start",
+            "toolCallId": "tool-1",
+            "toolName": "search",
+            "dynamic": True,
+        },
+        {
+            "type": "tool-input-available",
+            "toolCallId": "tool-1",
+            "toolName": "search",
+            "input": {"q": "x"},
+            "dynamic": True,
+        },
+    ]
+
+
+def test_tool_start_without_input_only_emits_start():
+    state = ModelStreamState()
+    out: list = []
+    process_stream_events_event(
+        {
+            "event": "on_tool_start",
+            "run_id": "tool-1",
+            "name": "search",
+            "data": {"metadata": {"k": "v"}},  # non-empty but no `input` key
         },
         state,
         out.append,

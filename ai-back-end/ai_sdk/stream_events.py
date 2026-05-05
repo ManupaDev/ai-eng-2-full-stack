@@ -115,6 +115,7 @@ def process_stream_events_event(
         name = event.get("name") or (
             data.get("name") if isinstance(data, dict) else None
         )
+        tool_input = data.get("input") if isinstance(data, dict) else None
         if tool_run_id and name:
             emit(
                 {
@@ -124,6 +125,19 @@ def process_stream_events_event(
                     "dynamic": True,
                 }
             )
+            # `astream_events` already has the full input at start time, so we can
+            # advance the UI past `input-streaming` immediately. (Without this the
+            # Tool block stays in "Pending" until output arrives.)
+            if tool_input is not None:
+                emit(
+                    {
+                        "type": "tool-input-available",
+                        "toolCallId": tool_run_id,
+                        "toolName": name,
+                        "input": tool_input,
+                        "dynamic": True,
+                    }
+                )
         return
 
     if event_name == "on_tool_end":
@@ -136,7 +150,30 @@ def process_stream_events_event(
                 {
                     "type": "tool-output-available",
                     "toolCallId": tool_run_id,
-                    "output": output,
+                    "output": _coerce_tool_output(output),
                 }
             )
         return
+
+
+def _coerce_tool_output(output: Any) -> Any:
+    """Best-effort coercion of LangChain tool returns to JSON-serializable shapes.
+
+    `langgraph`'s `ToolNode` wraps tool returns in `ToolMessage` instances which
+    aren't JSON-serializable. We extract `.content` (typically a string) and fall
+    back to ``str(output)`` for unknown shapes.
+    """
+    if output is None:
+        return None
+    if isinstance(output, (str, int, float, bool, list, dict)):
+        return output
+    content = getattr(output, "content", None)
+    if isinstance(content, (str, list, dict)):
+        return content
+    model_dump = getattr(output, "model_dump", None)
+    if callable(model_dump):
+        try:
+            return model_dump()
+        except Exception:
+            pass
+    return str(output)

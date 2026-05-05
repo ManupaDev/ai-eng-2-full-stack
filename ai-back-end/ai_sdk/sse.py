@@ -13,8 +13,22 @@ import json
 from typing import Any, AsyncIterable, AsyncIterator
 
 
+def _fallback(value: Any) -> Any:
+    """Last-resort serializer for objects that slipped through chunk coercion."""
+    content = getattr(value, "content", None)
+    if isinstance(content, (str, list, dict)):
+        return content
+    model_dump = getattr(value, "model_dump", None)
+    if callable(model_dump):
+        try:
+            return model_dump()
+        except Exception:
+            pass
+    return str(value)
+
+
 def encode_sse_chunk(chunk: dict[str, Any]) -> str:
-    return f"data: {json.dumps(chunk, separators=(',', ':'))}\n\n"
+    return f"data: {json.dumps(chunk, separators=(',', ':'), default=_fallback)}\n\n"
 
 
 def encode_sse_done() -> str:
