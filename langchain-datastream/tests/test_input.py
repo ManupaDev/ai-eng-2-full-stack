@@ -3,7 +3,7 @@
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
-from ai_sdk.input import (
+from langchain_datastream.input import (
     convert_assistant_content,
     convert_model_messages,
     convert_tool_result_part,

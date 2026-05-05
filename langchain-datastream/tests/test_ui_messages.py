@@ -2,7 +2,7 @@
 
 import pytest
 
-from ai_sdk.ui_messages import (
+from langchain_datastream.ui_messages import (
     DataUIPart,
     DynamicToolUIPart,
     FileUIPart,

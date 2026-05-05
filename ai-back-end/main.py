@@ -17,7 +17,7 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from pydantic import BaseModel
 
-from ai_sdk import to_base_messages, ui_message_stream_response
+from langchain_datastream import to_base_messages, ui_message_stream_response
 
 # --- Agent setup ---
 

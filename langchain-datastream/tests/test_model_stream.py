@@ -2,8 +2,8 @@
 
 from langchain_core.messages import AIMessageChunk
 
-from ai_sdk.model_stream import process_model_chunk
-from ai_sdk.types import ModelStreamState
+from langchain_datastream.model_stream import process_model_chunk
+from langchain_datastream.types import ModelStreamState
 
 
 def _emit_to_list(out: list):

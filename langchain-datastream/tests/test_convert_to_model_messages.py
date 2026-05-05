@@ -10,8 +10,8 @@ drops them — our Python output matches the JSON wire format.
 
 import pytest
 
-from ai_sdk.convert_to_model_messages import convert_to_model_messages
-from ai_sdk.model_messages import MessageConversionError
+from langchain_datastream.convert_to_model_messages import convert_to_model_messages
+from langchain_datastream.model_messages import MessageConversionError
 
 pytestmark = pytest.mark.asyncio
 

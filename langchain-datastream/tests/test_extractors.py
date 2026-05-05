@@ -2,7 +2,7 @@
 
 from langchain_core.messages import AIMessageChunk
 
-from ai_sdk.extractors import (
+from langchain_datastream.extractors import (
     extract_image_outputs,
     extract_reasoning_from_content_blocks,
     extract_reasoning_from_values_message,

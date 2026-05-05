@@ -2,8 +2,8 @@
 
 import pytest
 
-from ai_sdk import StreamCallbacks, to_ui_message_stream
-from ai_sdk.sse import frame_data_stream
+from langchain_datastream import StreamCallbacks, to_ui_message_stream
+from langchain_datastream.sse import frame_data_stream
 
 pytestmark = pytest.mark.asyncio
 

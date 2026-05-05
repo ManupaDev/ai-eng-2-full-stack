@@ -33,7 +33,14 @@ from .chunks import (
     chunk_to_dict,
 )
 from .convert_to_model_messages import convert_to_model_messages
-from .fastapi import DATA_STREAM_HEADERS, ui_message_stream_response
+
+try:
+    # FastAPI is an optional integration — only loaded when fastapi is installed.
+    from .fastapi import DATA_STREAM_HEADERS, ui_message_stream_response
+except ModuleNotFoundError:  # pragma: no cover - exercised when fastapi missing
+    DATA_STREAM_HEADERS = None  # type: ignore[assignment]
+    ui_message_stream_response = None  # type: ignore[assignment]
+
 from .input import (
     convert_assistant_content,
     convert_model_messages,

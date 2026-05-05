@@ -2,7 +2,7 @@
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
-from ai_sdk.guards import (
+from langchain_datastream.guards import (
     is_ai_message_chunk,
     is_gpt5_reasoning_output,
     is_image_generation_output,

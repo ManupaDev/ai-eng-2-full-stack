@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from ai_sdk import to_ui_message_stream
-from ai_sdk import langgraph_stream as lg
+from langchain_datastream import to_ui_message_stream
+from langchain_datastream import langgraph_stream as lg
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SNAPSHOTS = Path(__file__).parent / "snapshots"

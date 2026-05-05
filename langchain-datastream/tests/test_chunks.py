@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_sdk.chunks import (
+from langchain_datastream.chunks import (
     DataChunk,
     FileChunk,
     FinishChunk,

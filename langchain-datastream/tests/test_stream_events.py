@@ -1,7 +1,7 @@
 """Phase 4b verification: process_stream_events_event."""
 
-from ai_sdk.stream_events import process_stream_events_event
-from ai_sdk.types import ModelStreamState
+from langchain_datastream.stream_events import process_stream_events_event
+from langchain_datastream.types import ModelStreamState
 
 
 def test_chat_model_start_captures_run_id():

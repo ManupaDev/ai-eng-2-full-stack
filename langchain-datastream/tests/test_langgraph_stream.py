@@ -1,7 +1,7 @@
 """Phase 4c smoke tests: process_langgraph_event."""
 
-from ai_sdk.langgraph_stream import process_langgraph_event
-from ai_sdk.types import LangGraphEventState
+from langchain_datastream.langgraph_stream import process_langgraph_event
+from langchain_datastream.types import LangGraphEventState
 
 
 def _drive(events, state=None):
@@ -198,7 +198,7 @@ def test_values_emits_tool_call_for_unstreamed_tool():
 
 
 def test_hitl_interrupt_emits_approval_request(monkeypatch):
-    from ai_sdk import langgraph_stream
+    from langchain_datastream import langgraph_stream
 
     monkeypatch.setattr(langgraph_stream, "_now_ms", lambda: 1234567890)
 
